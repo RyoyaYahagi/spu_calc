@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <!-- レスポンシブ対応のためのビューポート設定 -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>楽天ポイント還元計算機</title>
+    
+    <style>
+        /* ========================================
+           基本スタイル
+        ======================================== */
+        
+        /* CSS変数でカラーパレットを定義 */
+        :root {
+            --primary-color: #bf0000;      /* 楽天カラー */
+            --primary-hover: #9a0000;
+            --bg-color: #f5f5f5;
+            --card-bg: #ffffff;
+            --text-color: #333333;
+            --border-color: #dddddd;
+            --result-bg: #fff8f8;
+        }
+        
+        /* リセットとボックスモデル */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Hiragino Sans', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            padding: 20px;
+        }
+        
+        /* ========================================
+           コンテナ・カードスタイル
+        ======================================== */
+        
+        .container {
+            max-width: 480px;
+            margin: 0 auto;
+        }
+        
+        .card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* ========================================
+           ヘッダースタイル
+        ======================================== */
+        
+        h1 {
+            color: var(--primary-color);
+            font-size: 1.5rem;
+            text-align: center;
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 2px solid var(--primary-color);
+        }
+        
+        /* ========================================
+           フォームスタイル
+        ======================================== */
+        
+        .form-group {
+            margin-bottom: 16px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 500;
+            font-size: 0.95rem;
+        }
+        
+        /* ラベルの補足テキスト */
+        .label-hint {
+            font-weight: normal;
+            color: #666;
+            font-size: 0.85rem;
+        }
+        
+        input[type="number"] {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.2s;
+        }
+        
+        input[type="number"]:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+        
+        /* ========================================
+           ボタンスタイル
+        ======================================== */
+        
+        .btn-calculate {
+            width: 100%;
+            padding: 14px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            margin-top: 8px;
+        }
+        
+        .btn-calculate:hover {
+            background-color: var(--primary-hover);
+        }
+        
+        .btn-calculate:active {
+            transform: scale(0.98);
+        }
+        
+        /* ========================================
+           結果表示エリア
+        ======================================== */
+        
+        .result {
+            margin-top: 24px;
+            padding: 20px;
+            background-color: var(--result-bg);
+            border-radius: 8px;
+            border: 1px solid var(--primary-color);
+            /* 初期状態では非表示 */
+            display: none;
+        }
+        
+        .result.show {
+            display: block;
+        }
+        
+        .result-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+        }
+        
+        .result-item:not(:last-child) {
+            border-bottom: 1px dashed var(--border-color);
+        }
+        
+        .result-label {
+            font-weight: 500;
+        }
+        
+        .result-value {
+            font-size: 1.4rem;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+        
+        /* ========================================
+           フッター
+        ======================================== */
+        
+        .footer {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 0.8rem;
+            color: #888;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <h1>🛒 楽天ポイント還元計算機</h1>
+            
+            <!-- 入力フォーム -->
+            <form id="calcForm">
+                <!-- 商品価格入力 -->
+                <div class="form-group">
+                    <label for="price">商品価格 <span class="label-hint">（税込・円）</span></label>
+                    <input type="number" id="price" placeholder="例: 10000" min="0" required>
+                </div>
+                
+                <!-- 通常ポイント入力 -->
+                <div class="form-group">
+                    <label for="basePoint">通常ポイント <span class="label-hint">（%）</span></label>
+                    <input type="number" id="basePoint" placeholder="例: 1" min="0" step="0.5" value="1">
+                </div>
+                
+                <!-- SPU倍率入力 -->
+                <div class="form-group">
+                    <label for="spuRate">SPU合計倍率 <span class="label-hint">（%）</span></label>
+                    <input type="number" id="spuRate" placeholder="例: 5" min="0" step="0.5" value="0">
+                </div>
+                
+                <!-- ショップポイント入力 -->
+                <div class="form-group">
+                    <label for="shopRate">ショップポイント倍率 <span class="label-hint">（%）</span></label>
+                    <input type="number" id="shopRate" placeholder="例: 2" min="0" step="0.5" value="0">
+                </div>
+                
+                <!-- キャンペーン倍率入力 -->
+                <div class="form-group">
+                    <label for="campaignRate">キャンペーン倍率 <span class="label-hint">（%）</span></label>
+                    <input type="number" id="campaignRate" placeholder="例: 10" min="0" step="0.5" value="0">
+                </div>
+                
+                <!-- 計算ボタン -->
+                <button type="submit" class="btn-calculate">計算する</button>
+            </form>
+            
+            <!-- 結果表示エリア（初期は非表示） -->
+            <div class="result" id="result">
+                <div class="result-item">
+                    <span class="result-label">合計還元率</span>
+                    <span class="result-value" id="totalRate">0%</span>
+                </div>
+                <div class="result-item">
+                    <span class="result-label">獲得予定ポイント</span>
+                    <span class="result-value" id="totalPoints">0 pt</span>
+                </div>
+            </div>
+        </div>
+        
+        <p class="footer">※ 実際の獲得ポイントは各種上限等により異なる場合があります</p>
+    </div>
+    
+    <script>
+        /* ========================================
+           JavaScript - ポイント計算ロジック
+        ======================================== */
+        
+        /**
+         * ポイント還元を計算する関数
+         * @param {number} price - 商品価格
+         * @param {number} basePoint - 通常ポイント率（%）
+         * @param {number} spuRate - SPU倍率（%）
+         * @param {number} shopRate - ショップポイント倍率（%）
+         * @param {number} campaignRate - キャンペーン倍率（%）
+         * @returns {Object} - 合計還元率と獲得ポイント
+         */
+        function calculatePoints(price, basePoint, spuRate, shopRate, campaignRate) {
+            // 合計還元率を計算（各倍率を加算）
+            const totalRate = basePoint + spuRate + shopRate + campaignRate;
+            
+            // 獲得ポイントを計算（小数点以下切り捨て）
+            // 楽天ポイントは原則として1ポイント単位で付与
+            const totalPoints = Math.floor(price * (totalRate / 100));
+            
+            return {
+                totalRate: totalRate,
+                totalPoints: totalPoints
+            };
+        }
+        
+        /**
+         * 数値をカンマ区切りでフォーマットする関数
+         * @param {number} num - フォーマットする数値
+         * @returns {string} - カンマ区切りの文字列
+         */
+        function formatNumber(num) {
+            return num.toLocaleString('ja-JP');
+        }
+        
+        /**
+         * 入力値を取得してNumber型に変換する関数
+         * 空欄やNaNの場合は0を返す
+         * @param {string} id - 入力要素のID
+         * @returns {number} - 数値
+         */
+        function getInputValue(id) {
+            const value = parseFloat(document.getElementById(id).value);
+            return isNaN(value) ? 0 : value;
+        }
+        
+        // フォームの送信イベントをリッスン
+        document.getElementById('calcForm').addEventListener('submit', function(event) {
+            // フォームのデフォルト送信を防止
+            event.preventDefault();
+            
+            // 各入力値を取得
+            const price = getInputValue('price');
+            const basePoint = getInputValue('basePoint');
+            const spuRate = getInputValue('spuRate');
+            const shopRate = getInputValue('shopRate');
+            const campaignRate = getInputValue('campaignRate');
+            
+            // 商品価格が0以下の場合はアラート
+            if (price <= 0) {
+                alert('商品価格を入力してください');
+                return;
+            }
+            
+            // ポイント計算を実行
+            const result = calculatePoints(price, basePoint, spuRate, shopRate, campaignRate);
+            
+            // 結果を画面に表示
+            document.getElementById('totalRate').textContent = result.totalRate + '%';
+            document.getElementById('totalPoints').textContent = formatNumber(result.totalPoints) + ' pt';
+            
+            // 結果エリアを表示（showクラスを追加）
+            document.getElementById('result').classList.add('show');
+        });
+    </script>
+</body>
+</html>
