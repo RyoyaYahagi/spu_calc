@@ -1,317 +1,1113 @@
 <!DOCTYPE html>
 <html lang="ja">
+
 <head>
     <meta charset="UTF-8">
-    <!-- レスポンシブ対応のためのビューポート設定 -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>楽天ポイント還元計算機</title>
-    
+
     <style>
         /* ========================================
-           基本スタイル
+           CSS変数（カラーパレット）
         ======================================== */
-        
-        /* CSS変数でカラーパレットを定義 */
         :root {
-            --primary-color: #bf0000;      /* 楽天カラー */
+            --primary-color: #bf0000;
             --primary-hover: #9a0000;
+            --primary-light: #fff0f0;
             --bg-color: #f5f5f5;
             --card-bg: #ffffff;
             --text-color: #333333;
+            --text-muted: #666666;
             --border-color: #dddddd;
-            --result-bg: #fff8f8;
+            --success-color: #28a745;
+            --warning-color: #e67700;
+            --info-color: #17a2b8;
         }
-        
-        /* リセットとボックスモデル */
+
         * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
         }
-        
+
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Hiragino Sans', sans-serif;
             background-color: var(--bg-color);
             color: var(--text-color);
             line-height: 1.6;
-            padding: 20px;
+            padding: 16px;
         }
-        
-        /* ========================================
-           コンテナ・カードスタイル
-        ======================================== */
-        
+
         .container {
-            max-width: 480px;
+            max-width: 540px;
             margin: 0 auto;
         }
-        
+
         .card {
             background: var(--card-bg);
             border-radius: 12px;
-            padding: 24px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            margin-bottom: 16px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
         }
-        
-        /* ========================================
-           ヘッダースタイル
-        ======================================== */
-        
+
         h1 {
             color: var(--primary-color);
-            font-size: 1.5rem;
+            font-size: 1.4rem;
             text-align: center;
-            margin-bottom: 24px;
-            padding-bottom: 16px;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
             border-bottom: 2px solid var(--primary-color);
         }
-        
-        /* ========================================
-           フォームスタイル
-        ======================================== */
-        
-        .form-group {
-            margin-bottom: 16px;
+
+        h2 {
+            font-size: 1rem;
+            color: var(--text-color);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
-        
+
+        h2::before {
+            content: '';
+            width: 4px;
+            height: 16px;
+            background: var(--primary-color);
+            border-radius: 2px;
+        }
+
+        /* フォーム要素 */
+        .form-group {
+            margin-bottom: 12px;
+        }
+
         label {
             display: block;
-            margin-bottom: 6px;
+            margin-bottom: 4px;
             font-weight: 500;
-            font-size: 0.95rem;
+            font-size: 0.9rem;
         }
-        
-        /* ラベルの補足テキスト */
+
         .label-hint {
             font-weight: normal;
-            color: #666;
-            font-size: 0.85rem;
+            color: var(--text-muted);
+            font-size: 0.8rem;
         }
-        
-        input[type="number"] {
+
+        input[type="number"],
+        input[type="text"],
+        input[type="date"] {
             width: 100%;
-            padding: 12px;
+            padding: 10px 12px;
             border: 1px solid var(--border-color);
             border-radius: 8px;
             font-size: 1rem;
             transition: border-color 0.2s;
         }
-        
-        input[type="number"]:focus {
+
+        input:focus {
             outline: none;
             border-color: var(--primary-color);
         }
-        
-        /* ========================================
-           ボタンスタイル
-        ======================================== */
-        
-        .btn-calculate {
-            width: 100%;
-            padding: 14px;
-            background-color: var(--primary-color);
-            color: white;
+
+        .input-row {
+            display: flex;
+            gap: 8px;
+        }
+
+        .input-row .form-group {
+            flex: 1;
+        }
+
+        /* ボタン */
+        .btn {
+            padding: 12px 16px;
             border: none;
             border-radius: 8px;
-            font-size: 1.1rem;
+            font-size: 1rem;
             font-weight: bold;
             cursor: pointer;
-            transition: background-color 0.2s;
-            margin-top: 8px;
+            transition: all 0.2s;
         }
-        
-        .btn-calculate:hover {
+
+        .btn-primary {
+            width: 100%;
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .btn-primary:hover {
             background-color: var(--primary-hover);
         }
-        
-        .btn-calculate:active {
-            transform: scale(0.98);
+
+        .btn-secondary {
+            background-color: #eee;
+            color: var(--text-color);
+            font-weight: normal;
+            font-size: 0.9rem;
+            padding: 8px 12px;
         }
-        
-        /* ========================================
-           結果表示エリア
-        ======================================== */
-        
-        .result {
-            margin-top: 24px;
-            padding: 20px;
-            background-color: var(--result-bg);
+
+        .btn-add {
+            width: 100%;
+            background: none;
+            border: 2px dashed var(--border-color);
+            color: var(--text-muted);
+            padding: 10px;
+            margin-top: 8px;
+        }
+
+        .btn-add:hover {
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+        }
+
+        .btn-small {
+            padding: 6px 10px;
+            font-size: 0.85rem;
+            font-weight: normal;
+        }
+
+        .btn-delete {
+            background: none;
+            border: none;
+            color: #999;
+            cursor: pointer;
+            padding: 4px 8px;
+            font-size: 1.2rem;
+        }
+
+        .btn-delete:hover {
+            color: var(--primary-color);
+        }
+
+        /* トグルスイッチ */
+        .toggle-item {
+            display: flex;
+            align-items: flex-start;
+            padding: 10px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .toggle-item:last-child {
+            border-bottom: none;
+        }
+
+        .toggle-switch {
+            position: relative;
+            width: 44px;
+            height: 24px;
+            flex-shrink: 0;
+            margin-right: 12px;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: 0.3s;
+            border-radius: 24px;
+        }
+
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: 0.3s;
+            border-radius: 50%;
+        }
+
+        .toggle-switch input:checked+.toggle-slider {
+            background-color: var(--primary-color);
+        }
+
+        .toggle-switch input:checked+.toggle-slider:before {
+            transform: translateX(20px);
+        }
+
+        .toggle-content {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .toggle-title {
+            font-weight: 500;
+            font-size: 0.95rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .toggle-rate {
+            color: var(--primary-color);
+            font-weight: bold;
+        }
+
+        .toggle-meta {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        .toggle-actions {
+            display: flex;
+            align-items: center;
+        }
+
+        /* アコーディオン */
+        .accordion-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            padding: 8px 0;
+        }
+
+        .accordion-header h2 {
+            margin-bottom: 0;
+        }
+
+        .accordion-toggle {
+            font-size: 1.2rem;
+            color: var(--text-muted);
+            transition: transform 0.3s;
+        }
+
+        .accordion-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+        }
+
+        .accordion-content.open {
+            max-height: 2000px;
+        }
+
+        /* マラソン店舗リスト */
+        .shop-list {
+            background: #fafafa;
             border-radius: 8px;
-            border: 1px solid var(--primary-color);
-            /* 初期状態では非表示 */
-            display: none;
+            padding: 12px;
+            margin-top: 8px;
         }
-        
-        .result.show {
-            display: block;
-        }
-        
-        .result-item {
+
+        .shop-item {
             display: flex;
             justify-content: space-between;
             align-items: center;
             padding: 8px 0;
+            border-bottom: 1px solid #eee;
         }
-        
-        .result-item:not(:last-child) {
-            border-bottom: 1px dashed var(--border-color);
+
+        .shop-item:last-child {
+            border-bottom: none;
         }
-        
-        .result-label {
+
+        .shop-info {
+            flex: 1;
+        }
+
+        .shop-name {
+            font-size: 0.9rem;
             font-weight: 500;
         }
-        
-        .result-value {
-            font-size: 1.4rem;
-            font-weight: bold;
-            color: var(--primary-color);
+
+        .shop-amount {
+            font-size: 0.8rem;
+            color: var(--text-muted);
         }
-        
-        /* ========================================
-           フッター
-        ======================================== */
-        
+
+        .shop-count-badge {
+            background: var(--primary-color);
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+
+        /* 結果表示 */
+        .result {
+            display: none;
+        }
+
+        .result.show {
+            display: block;
+        }
+
+        .result-main {
+            background: linear-gradient(135deg, var(--primary-color), #e63946);
+            color: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 16px;
+        }
+
+        .result-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 6px 0;
+        }
+
+        .result-row:not(:last-child) {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .result-label {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        .result-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+
+        .result-value.highlight {
+            font-size: 1.8rem;
+        }
+
+        .breakdown {
+            background: var(--primary-light);
+            border-radius: 8px;
+            padding: 12px;
+        }
+
+        .breakdown-title {
+            font-size: 0.85rem;
+            font-weight: bold;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+        }
+
+        .breakdown-item {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.9rem;
+            padding: 4px 0;
+        }
+
+        .breakdown-item.limited {
+            color: var(--warning-color);
+        }
+
+        /* モーダル */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 100;
+            justify-content: center;
+            align-items: center;
+            padding: 16px;
+        }
+
+        .modal-overlay.show {
+            display: flex;
+        }
+
+        .modal {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            width: 100%;
+            max-width: 400px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .modal-title {
+            font-size: 1.1rem;
+            font-weight: bold;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: var(--text-muted);
+            cursor: pointer;
+        }
+
+        .modal-footer {
+            display: flex;
+            gap: 8px;
+            margin-top: 16px;
+        }
+
+        .modal-footer .btn {
+            flex: 1;
+        }
+
         .footer {
             text-align: center;
-            margin-top: 20px;
-            font-size: 0.8rem;
+            font-size: 0.75rem;
             color: #888;
+            margin-top: 8px;
+        }
+
+        .mt-8 {
+            margin-top: 8px;
+        }
+
+        .mt-16 {
+            margin-top: 16px;
+        }
+
+        .text-muted {
+            color: var(--text-muted);
         }
     </style>
 </head>
+
 <body>
     <div class="container">
+        <!-- ヘッダー -->
         <div class="card">
             <h1>🛒 楽天ポイント還元計算機</h1>
-            
-            <!-- 入力フォーム -->
+
+            <!-- 基本設定 -->
             <form id="calcForm">
-                <!-- 商品価格入力 -->
                 <div class="form-group">
                     <label for="price">商品価格 <span class="label-hint">（税込・円）</span></label>
-                    <input type="number" id="price" placeholder="例: 10000" min="0" required>
+                    <input type="number" id="price" placeholder="10000" min="0" required>
                 </div>
-                
-                <!-- 通常ポイント入力 -->
+
+                <div class="input-row">
+                    <div class="form-group">
+                        <label for="basePoint">通常ポイント <span class="label-hint">%</span></label>
+                        <input type="number" id="basePoint" value="1" min="0" step="0.5">
+                    </div>
+                    <div class="form-group">
+                        <label for="spuRate">SPU合計 <span class="label-hint">%</span></label>
+                        <input type="number" id="spuRate" value="0" min="0" step="0.5">
+                    </div>
+                    <div class="form-group">
+                        <label for="shopRate">ショップ <span class="label-hint">%</span></label>
+                        <input type="number" id="shopRate" value="0" min="0" step="0.5">
+                    </div>
+                </div>
+
+                <!-- ポイ活サイト（統合版） -->
                 <div class="form-group">
-                    <label for="basePoint">通常ポイント <span class="label-hint">（%）</span></label>
-                    <input type="number" id="basePoint" placeholder="例: 1" min="0" step="0.5" value="1">
+                    <label for="pointSiteRate">ポイ活サイト還元率 <span class="label-hint">% (ハピタス・モッピー等)</span></label>
+                    <input type="number" id="pointSiteRate" value="0" min="0" step="0.1" placeholder="1.0">
                 </div>
-                
-                <!-- SPU倍率入力 -->
-                <div class="form-group">
-                    <label for="spuRate">SPU合計倍率 <span class="label-hint">（%）</span></label>
-                    <input type="number" id="spuRate" placeholder="例: 5" min="0" step="0.5" value="0">
-                </div>
-                
-                <!-- ショップポイント入力 -->
-                <div class="form-group">
-                    <label for="shopRate">ショップポイント倍率 <span class="label-hint">（%）</span></label>
-                    <input type="number" id="shopRate" placeholder="例: 2" min="0" step="0.5" value="0">
-                </div>
-                
-                <!-- キャンペーン倍率入力 -->
-                <div class="form-group">
-                    <label for="campaignRate">キャンペーン倍率 <span class="label-hint">（%）</span></label>
-                    <input type="number" id="campaignRate" placeholder="例: 10" min="0" step="0.5" value="0">
-                </div>
-                
-                <!-- 計算ボタン -->
-                <button type="submit" class="btn-calculate">計算する</button>
             </form>
-            
-            <!-- 結果表示エリア（初期は非表示） -->
-            <div class="result" id="result">
-                <div class="result-item">
+        </div>
+
+        <!-- キャンペーン -->
+        <div class="card">
+            <div class="accordion-header" onclick="toggleAccordion('campaignAccordion', this)">
+                <h2>キャンペーン</h2>
+                <span class="accordion-toggle">▼</span>
+            </div>
+            <div id="campaignAccordion" class="accordion-content open">
+                <div id="campaignList"></div>
+                <button type="button" class="btn btn-add" onclick="openCampaignModal()">
+                    ＋ キャンペーン追加
+                </button>
+            </div>
+        </div>
+
+        <!-- お買い物マラソン店舗管理 -->
+        <div class="card" id="marathonShopCard" style="display: none;">
+            <div class="accordion-header" onclick="toggleAccordion('marathonAccordion', this)">
+                <h2>お買い物マラソン 購入店舗</h2>
+                <span class="accordion-toggle">▼</span>
+            </div>
+            <div id="marathonAccordion" class="accordion-content open">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                    <span>現在の店舗数: <span class="shop-count-badge" id="shopCountBadge">0</span> → <span
+                            class="toggle-rate" id="marathonRateDisplay">+0%</span></span>
+                </div>
+                <div class="shop-list" id="marathonShopList">
+                    <p class="text-muted" style="text-align: center; padding: 16px;">店舗を追加してください</p>
+                </div>
+                <button type="button" class="btn btn-add" onclick="openShopModal()">
+                    ＋ 購入店舗を追加
+                </button>
+            </div>
+        </div>
+
+        <!-- 計算ボタン -->
+        <button type="button" class="btn btn-primary" onclick="calculate()">
+            計算する
+        </button>
+
+        <!-- 結果表示 -->
+        <div id="result" class="result mt-16">
+            <div class="result-main">
+                <div class="result-row">
                     <span class="result-label">合計還元率</span>
                     <span class="result-value" id="totalRate">0%</span>
                 </div>
-                <div class="result-item">
+                <div class="result-row">
                     <span class="result-label">獲得予定ポイント</span>
-                    <span class="result-value" id="totalPoints">0 pt</span>
+                    <span class="result-value highlight" id="totalPoints">0 pt</span>
+                </div>
+                <div class="result-row">
+                    <span class="result-label">実質価格</span>
+                    <span class="result-value" id="effectivePrice">0 円</span>
                 </div>
             </div>
+
+            <div class="breakdown">
+                <div class="breakdown-title">📊 ポイント内訳</div>
+                <div id="breakdownList"></div>
+            </div>
         </div>
-        
-        <p class="footer">※ 実際の獲得ポイントは各種上限等により異なる場合があります</p>
+
+        <p class="footer mt-16">※ 実際の獲得ポイントは各種上限等により異なる場合があります</p>
     </div>
-    
+
+    <!-- キャンペーン追加モーダル -->
+    <div id="campaignModal" class="modal-overlay">
+        <div class="modal">
+            <div class="modal-header">
+                <span class="modal-title">キャンペーン追加</span>
+                <button class="modal-close" onclick="closeCampaignModal()">&times;</button>
+            </div>
+            <div class="form-group">
+                <label>キャンペーン名</label>
+                <input type="text" id="campaignName" placeholder="超ポイントバック祭">
+            </div>
+            <div class="input-row">
+                <div class="form-group">
+                    <label>倍率 (%)</label>
+                    <input type="number" id="campaignRate" placeholder="5" min="0" step="0.5">
+                </div>
+                <div class="form-group">
+                    <label>上限ポイント</label>
+                    <input type="number" id="campaignMaxPoints" placeholder="7000" min="0">
+                </div>
+            </div>
+            <div class="input-row">
+                <div class="form-group">
+                    <label>開始日</label>
+                    <input type="date" id="campaignStartDate">
+                </div>
+                <div class="form-group">
+                    <label>終了日</label>
+                    <input type="date" id="campaignEndDate">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>期間内の累計購入金額 <span class="label-hint">（円）</span></label>
+                <input type="number" id="campaignSpentAmount" placeholder="0" min="0" value="0">
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeCampaignModal()">キャンセル</button>
+                <button class="btn btn-primary" onclick="saveCampaign()">追加</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 購入店舗追加モーダル -->
+    <div id="shopModal" class="modal-overlay">
+        <div class="modal">
+            <div class="modal-header">
+                <span class="modal-title">購入店舗を追加</span>
+                <button class="modal-close" onclick="closeShopModal()">&times;</button>
+            </div>
+            <div class="form-group">
+                <label>店舗名</label>
+                <input type="text" id="shopName" placeholder="○○ショップ">
+            </div>
+            <div class="form-group">
+                <label>購入金額 <span class="label-hint">（税込・円）※1,000円以上で1店舗カウント</span></label>
+                <input type="number" id="shopAmount" placeholder="3000" min="0">
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeShopModal()">キャンセル</button>
+                <button class="btn btn-primary" onclick="saveShop()">追加</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         /* ========================================
-           JavaScript - ポイント計算ロジック
+           データ管理
         ======================================== */
-        
-        /**
-         * ポイント還元を計算する関数
-         * @param {number} price - 商品価格
-         * @param {number} basePoint - 通常ポイント率（%）
-         * @param {number} spuRate - SPU倍率（%）
-         * @param {number} shopRate - ショップポイント倍率（%）
-         * @param {number} campaignRate - キャンペーン倍率（%）
-         * @returns {Object} - 合計還元率と獲得ポイント
-         */
-        function calculatePoints(price, basePoint, spuRate, shopRate, campaignRate) {
-            // 合計還元率を計算（各倍率を加算）
-            const totalRate = basePoint + spuRate + shopRate + campaignRate;
-            
-            // 獲得ポイントを計算（小数点以下切り捨て）
-            // 楽天ポイントは原則として1ポイント単位で付与
-            const totalPoints = Math.floor(price * (totalRate / 100));
-            
-            return {
-                totalRate: totalRate,
-                totalPoints: totalPoints
-            };
+
+        const STORAGE_KEY = 'rakuten_point_calculator_v2';
+
+        // デフォルトデータ
+        const defaultData = {
+            campaigns: [
+                {
+                    id: 'marathon',
+                    name: 'お買い物マラソン',
+                    rate: 0,  // 店舗数から自動計算
+                    maxPoints: 7000,
+                    enabled: false,
+                    startDate: '',
+                    endDate: '',
+                    spentAmount: 0,
+                    isPreset: true,
+                    isMarathon: true  // マラソン専用フラグ
+                },
+                {
+                    id: 'fiveZero',
+                    name: '5と0のつく日',
+                    rate: 1,  // 修正: 2% → 1%
+                    maxPoints: 3000,
+                    enabled: false,
+                    startDate: '',
+                    endDate: '',
+                    spentAmount: 0,
+                    isPreset: true
+                },
+                {
+                    id: 'victory',
+                    name: '勝ったら倍',
+                    rate: 1,
+                    maxPoints: 1000,
+                    enabled: false,
+                    startDate: '',
+                    endDate: '',
+                    spentAmount: 0,
+                    isPreset: true
+                },
+                {
+                    id: 'shop39',
+                    name: '39ショップ',
+                    rate: 1,
+                    maxPoints: null,
+                    enabled: false,
+                    startDate: '',
+                    endDate: '',
+                    spentAmount: 0,
+                    isPreset: true
+                },
+            ],
+            // マラソン期間内の購入店舗リスト
+            marathonShops: []
+        };
+
+        function loadData() {
+            const saved = localStorage.getItem(STORAGE_KEY);
+            if (saved) {
+                const data = JSON.parse(saved);
+                // マイグレーション: marathonShopsがない場合は追加
+                if (!data.marathonShops) {
+                    data.marathonShops = [];
+                }
+                return data;
+            }
+            return JSON.parse(JSON.stringify(defaultData));
         }
-        
-        /**
-         * 数値をカンマ区切りでフォーマットする関数
-         * @param {number} num - フォーマットする数値
-         * @returns {string} - カンマ区切りの文字列
-         */
-        function formatNumber(num) {
-            return num.toLocaleString('ja-JP');
+
+        function saveData(data) {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
         }
-        
-        /**
-         * 入力値を取得してNumber型に変換する関数
-         * 空欄やNaNの場合は0を返す
-         * @param {string} id - 入力要素のID
-         * @returns {number} - 数値
-         */
-        function getInputValue(id) {
-            const value = parseFloat(document.getElementById(id).value);
-            return isNaN(value) ? 0 : value;
+
+        let appData = loadData();
+
+        /* ========================================
+           マラソン店舗数から倍率を計算
+           1店舗=+1%, 2店舗=+2%, ... 最大10店舗=+9%
+        ======================================== */
+        function calculateMarathonRate() {
+            // 1,000円以上の店舗のみカウント
+            const qualifiedShops = appData.marathonShops.filter(shop => shop.amount >= 1000);
+            const shopCount = qualifiedShops.length;
+
+            // 1店舗目は通常ポイントなので、2店舗目から+1%、最大10店舗で+9%
+            // つまり (店舗数 - 1) が追加倍率、最大9%
+            const rate = Math.min(Math.max(shopCount - 1, 0), 9);
+            return { shopCount, rate };
         }
-        
-        // フォームの送信イベントをリッスン
-        document.getElementById('calcForm').addEventListener('submit', function(event) {
-            // フォームのデフォルト送信を防止
-            event.preventDefault();
-            
-            // 各入力値を取得
-            const price = getInputValue('price');
-            const basePoint = getInputValue('basePoint');
-            const spuRate = getInputValue('spuRate');
-            const shopRate = getInputValue('shopRate');
-            const campaignRate = getInputValue('campaignRate');
-            
-            // 商品価格が0以下の場合はアラート
+
+        // マラソン購入店舗の合計金額を計算
+        function calculateMarathonSpentAmount() {
+            return appData.marathonShops.reduce((sum, shop) => sum + shop.amount, 0);
+        }
+
+        /* ========================================
+           UI描画
+        ======================================== */
+
+        function renderCampaigns() {
+            const container = document.getElementById('campaignList');
+            container.innerHTML = '';
+
+            appData.campaigns.forEach((campaign, index) => {
+                let displayRate = campaign.rate;
+                let metaText = '';
+
+                // マラソンの場合は店舗数から倍率を計算
+                if (campaign.isMarathon) {
+                    const { shopCount, rate } = calculateMarathonRate();
+                    displayRate = rate;
+                    metaText = `${shopCount}店舗 / 上限: ${formatNumber(campaign.maxPoints)}pt`;
+                } else {
+                    const remainingPoints = calculateRemainingPoints(campaign);
+                    metaText = buildCampaignMeta(campaign, remainingPoints);
+                }
+
+                container.innerHTML += `
+                    <div class="toggle-item">
+                        <label class="toggle-switch">
+                            <input type="checkbox" ${campaign.enabled ? 'checked' : ''} 
+                                   onchange="toggleCampaign(${index}, this.checked)">
+                            <span class="toggle-slider"></span>
+                        </label>
+                        <div class="toggle-content">
+                            <div class="toggle-title">
+                                ${campaign.name}
+                                <span class="toggle-rate">+${displayRate}%</span>
+                            </div>
+                            <div class="toggle-meta">${metaText}</div>
+                        </div>
+                        <div class="toggle-actions">
+                            ${!campaign.isPreset ? `<button class="btn-delete" onclick="deleteCampaign(${index})">×</button>` : ''}
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function buildCampaignMeta(campaign, remainingPoints) {
+            let parts = [];
+            if (campaign.maxPoints) {
+                parts.push(`上限: ${formatNumber(campaign.maxPoints)}pt`);
+                if (remainingPoints !== null && campaign.spentAmount > 0) {
+                    parts.push(`残: ${formatNumber(remainingPoints)}pt`);
+                }
+            }
+            if (campaign.startDate && campaign.endDate) {
+                parts.push(`${campaign.startDate} 〜 ${campaign.endDate}`);
+            }
+            return parts.length > 0 ? parts.join(' / ') : '上限なし';
+        }
+
+        function calculateRemainingPoints(campaign) {
+            if (!campaign.maxPoints || !campaign.spentAmount) return null;
+            const earnedPoints = Math.floor(campaign.spentAmount * (campaign.rate / 100));
+            return Math.max(0, campaign.maxPoints - earnedPoints);
+        }
+
+        // マラソン店舗リストを描画
+        function renderMarathonShops() {
+            const container = document.getElementById('marathonShopList');
+            const { shopCount, rate } = calculateMarathonRate();
+
+            // バッジと倍率を更新
+            document.getElementById('shopCountBadge').textContent = shopCount;
+            document.getElementById('marathonRateDisplay').textContent = `+${rate}%`;
+
+            if (appData.marathonShops.length === 0) {
+                container.innerHTML = '<p class="text-muted" style="text-align: center; padding: 16px;">店舗を追加してください</p>';
+                return;
+            }
+
+            container.innerHTML = appData.marathonShops.map((shop, index) => {
+                const isQualified = shop.amount >= 1000;
+                return `
+                    <div class="shop-item">
+                        <div class="shop-info">
+                            <div class="shop-name">${shop.name} ${isQualified ? '✓' : '<span style="color: var(--warning-color);">※1000円未満</span>'}</div>
+                            <div class="shop-amount">${formatNumber(shop.amount)}円</div>
+                        </div>
+                        <button class="btn-delete" onclick="deleteShop(${index})">×</button>
+                    </div>
+                `;
+            }).join('');
+
+            // キャンペーンリストも更新
+            renderCampaigns();
+        }
+
+        // マラソンカードの表示/非表示
+        function updateMarathonCardVisibility() {
+            const marathonCampaign = appData.campaigns.find(c => c.isMarathon);
+            const card = document.getElementById('marathonShopCard');
+            if (marathonCampaign && marathonCampaign.enabled) {
+                card.style.display = 'block';
+            } else {
+                card.style.display = 'none';
+            }
+        }
+
+        /* ========================================
+           イベントハンドラ
+        ======================================== */
+
+        function toggleAccordion(id, header) {
+            const content = document.getElementById(id);
+            const toggle = header.querySelector('.accordion-toggle');
+            content.classList.toggle('open');
+            toggle.textContent = content.classList.contains('open') ? '▼' : '▶';
+        }
+
+        function toggleCampaign(index, enabled) {
+            appData.campaigns[index].enabled = enabled;
+            saveData(appData);
+
+            // マラソンの場合はカードの表示を更新
+            if (appData.campaigns[index].isMarathon) {
+                updateMarathonCardVisibility();
+            }
+        }
+
+        function deleteCampaign(index) {
+            if (confirm('このキャンペーンを削除しますか？')) {
+                appData.campaigns.splice(index, 1);
+                saveData(appData);
+                renderCampaigns();
+            }
+        }
+
+        function deleteShop(index) {
+            if (confirm('この店舗を削除しますか？')) {
+                appData.marathonShops.splice(index, 1);
+                saveData(appData);
+                renderMarathonShops();
+            }
+        }
+
+        /* ========================================
+           モーダル操作
+        ======================================== */
+
+        function openCampaignModal() {
+            document.getElementById('campaignModal').classList.add('show');
+            document.getElementById('campaignName').value = '';
+            document.getElementById('campaignRate').value = '';
+            document.getElementById('campaignMaxPoints').value = '';
+            document.getElementById('campaignStartDate').value = '';
+            document.getElementById('campaignEndDate').value = '';
+            document.getElementById('campaignSpentAmount').value = '0';
+        }
+
+        function closeCampaignModal() {
+            document.getElementById('campaignModal').classList.remove('show');
+        }
+
+        function saveCampaign() {
+            const name = document.getElementById('campaignName').value.trim();
+            const rate = parseFloat(document.getElementById('campaignRate').value) || 0;
+            const maxPoints = parseInt(document.getElementById('campaignMaxPoints').value) || null;
+            const startDate = document.getElementById('campaignStartDate').value;
+            const endDate = document.getElementById('campaignEndDate').value;
+            const spentAmount = parseInt(document.getElementById('campaignSpentAmount').value) || 0;
+
+            if (!name) {
+                alert('キャンペーン名を入力してください');
+                return;
+            }
+
+            appData.campaigns.push({
+                id: 'custom_' + Date.now(),
+                name,
+                rate,
+                maxPoints,
+                enabled: true,
+                startDate,
+                endDate,
+                spentAmount,
+                isPreset: false
+            });
+
+            saveData(appData);
+            renderCampaigns();
+            closeCampaignModal();
+        }
+
+        function openShopModal() {
+            document.getElementById('shopModal').classList.add('show');
+            document.getElementById('shopName').value = '';
+            document.getElementById('shopAmount').value = '';
+        }
+
+        function closeShopModal() {
+            document.getElementById('shopModal').classList.remove('show');
+        }
+
+        function saveShop() {
+            const name = document.getElementById('shopName').value.trim();
+            const amount = parseInt(document.getElementById('shopAmount').value) || 0;
+
+            if (!name) {
+                alert('店舗名を入力してください');
+                return;
+            }
+
+            if (amount <= 0) {
+                alert('購入金額を入力してください');
+                return;
+            }
+
+            appData.marathonShops.push({
+                id: 'shop_' + Date.now(),
+                name,
+                amount
+            });
+
+            saveData(appData);
+            renderMarathonShops();
+            closeShopModal();
+        }
+
+        /* ========================================
+           計算ロジック
+        ======================================== */
+
+        function calculate() {
+            const price = parseFloat(document.getElementById('price').value) || 0;
+            const basePoint = parseFloat(document.getElementById('basePoint').value) || 0;
+            const spuRate = parseFloat(document.getElementById('spuRate').value) || 0;
+            const shopRate = parseFloat(document.getElementById('shopRate').value) || 0;
+            const pointSiteRate = parseFloat(document.getElementById('pointSiteRate').value) || 0;
+
             if (price <= 0) {
                 alert('商品価格を入力してください');
                 return;
             }
-            
-            // ポイント計算を実行
-            const result = calculatePoints(price, basePoint, spuRate, shopRate, campaignRate);
-            
-            // 結果を画面に表示
-            document.getElementById('totalRate').textContent = result.totalRate + '%';
-            document.getElementById('totalPoints').textContent = formatNumber(result.totalPoints) + ' pt';
-            
-            // 結果エリアを表示（showクラスを追加）
+
+            const breakdown = [];
+            let totalPoints = 0;
+            let totalRate = 0;
+
+            // 通常ポイント
+            const basePoints = Math.floor(price * (basePoint / 100));
+            breakdown.push({ name: '通常ポイント', points: basePoints, rate: basePoint });
+            totalPoints += basePoints;
+            totalRate += basePoint;
+
+            // SPU
+            if (spuRate > 0) {
+                const spuPoints = Math.floor(price * (spuRate / 100));
+                breakdown.push({ name: 'SPU', points: spuPoints, rate: spuRate });
+                totalPoints += spuPoints;
+                totalRate += spuRate;
+            }
+
+            // ショップポイント
+            if (shopRate > 0) {
+                const shopPoints = Math.floor(price * (shopRate / 100));
+                breakdown.push({ name: 'ショップポイント', points: shopPoints, rate: shopRate });
+                totalPoints += shopPoints;
+                totalRate += shopRate;
+            }
+
+            // キャンペーン
+            appData.campaigns.forEach(campaign => {
+                if (!campaign.enabled) return;
+
+                let currentRate = campaign.rate;
+                let currentSpentAmount = campaign.spentAmount;
+
+                // マラソンの場合は店舗数から倍率を計算
+                if (campaign.isMarathon) {
+                    const { rate } = calculateMarathonRate();
+                    currentRate = rate;
+                    currentSpentAmount = calculateMarathonSpentAmount();
+                }
+
+                if (currentRate <= 0) return;
+
+                // 期間チェック
+                if (campaign.startDate && campaign.endDate) {
+                    const today = new Date().toISOString().split('T')[0];
+                    if (today < campaign.startDate || today > campaign.endDate) {
+                        return;
+                    }
+                }
+
+                let earnedPoints = Math.floor(price * (currentRate / 100));
+                let isLimited = false;
+
+                // 上限チェック
+                if (campaign.maxPoints) {
+                    const alreadyEarned = Math.floor(currentSpentAmount * (currentRate / 100));
+                    const remaining = Math.max(0, campaign.maxPoints - alreadyEarned);
+
+                    if (remaining <= 0) {
+                        return; // 上限到達済み
+                    }
+                    if (earnedPoints > remaining) {
+                        earnedPoints = remaining;
+                        isLimited = true;
+                    }
+                }
+
+                breakdown.push({
+                    name: campaign.name,
+                    points: earnedPoints,
+                    rate: currentRate,
+                    isLimited
+                });
+                totalPoints += earnedPoints;
+                totalRate += currentRate;
+            });
+
+            // ポイ活サイト
+            if (pointSiteRate > 0) {
+                const sitePoints = Math.floor(price * (pointSiteRate / 100));
+                breakdown.push({ name: 'ポイ活サイト', points: sitePoints, rate: pointSiteRate });
+                totalPoints += sitePoints;
+                totalRate += pointSiteRate;
+            }
+
+            // 結果を表示
+            document.getElementById('totalRate').textContent = totalRate.toFixed(1) + '%';
+            document.getElementById('totalPoints').textContent = formatNumber(totalPoints) + ' pt';
+            document.getElementById('effectivePrice').textContent = formatNumber(price - totalPoints) + ' 円';
+
+            // 内訳を表示
+            const breakdownContainer = document.getElementById('breakdownList');
+            breakdownContainer.innerHTML = breakdown.map(item => `
+                <div class="breakdown-item ${item.isLimited ? 'limited' : ''}">
+                    <span>${item.name} (${item.rate}%)</span>
+                    <span>${formatNumber(item.points)} pt ${item.isLimited ? '(上限)' : ''}</span>
+                </div>
+            `).join('');
+
             document.getElementById('result').classList.add('show');
+        }
+
+        function formatNumber(num) {
+            return num.toLocaleString('ja-JP');
+        }
+
+        /* ========================================
+           初期化
+        ======================================== */
+        document.addEventListener('DOMContentLoaded', () => {
+            renderCampaigns();
+            renderMarathonShops();
+            updateMarathonCardVisibility();
         });
     </script>
 </body>
+
 </html>
